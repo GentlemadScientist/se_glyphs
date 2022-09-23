@@ -4,7 +4,7 @@ var glyphs = {}
 		
 func load_data():
 	var data_file = File.new()
-	data_file.open("file://data.json", File.READ)
+	data_file.open("user://data.json", File.READ)
 	var content = data_file.get_as_text()
 	data_file.close()
 	var json = JSON.parse(content)
