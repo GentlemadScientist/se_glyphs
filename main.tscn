@@ -1,0 +1,56 @@
+[gd_scene load_steps=11 format=2]
+
+[ext_resource path="res://main.gd" type="Script" id=1]
+[ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
+[ext_resource path="res://Camera.gd" type="Script" id=3]
+[ext_resource path="res://glyph_image.gd" type="Script" id=4]
+[ext_resource path="res://glyph_area.gd" type="Script" id=5]
+[ext_resource path="res://collision_shape.gd" type="Script" id=6]
+
+[sub_resource type="SphereMesh" id=8]
+
+[sub_resource type="SphereShape" id=7]
+
+[sub_resource type="SpatialMaterial" id=2]
+
+[sub_resource type="ShaderMaterial" id=3]
+
+[node name="Main" type="Node"]
+
+[node name="symbol_3d_space" type="Spatial" parent="."]
+script = ExtResource( 1 )
+
+[node name="symbol" type="Position3D" parent="symbol_3d_space"]
+visible = false
+
+[node name="glyph_image" type="Sprite3D" parent="symbol_3d_space/symbol"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1 )
+billboard = 1
+texture = ExtResource( 2 )
+script = ExtResource( 4 )
+
+[node name="glyph_area" type="Area" parent="symbol_3d_space/symbol"]
+script = ExtResource( 5 )
+
+[node name="MeshInstance" type="MeshInstance" parent="symbol_3d_space/symbol/glyph_area"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
+mesh = SubResource( 8 )
+skeleton = NodePath("../..")
+
+[node name="CollisionShape" type="CollisionShape" parent="symbol_3d_space/symbol/glyph_area"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
+shape = SubResource( 7 )
+script = ExtResource( 6 )
+
+[node name="Camera" type="Camera" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.88238 )
+fov = 90.0
+script = ExtResource( 3 )
+
+[node name="ImmediateGeometry" type="ImmediateGeometry" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.721, 0, 0 )
+visible = false
+material_override = SubResource( 2 )
+material_overlay = SubResource( 3 )
+
+[connection signal="input_event" from="symbol_3d_space/symbol/glyph_area" to="symbol_3d_space" method="_on_glyph_area_input_event"]
