@@ -2,11 +2,9 @@ extends Node
 
 var glyphs = {}
 		
-func load_data():
-	var data_file = File.new()
-	data_file.open("user://data.json", File.READ)
-	var content = data_file.get_as_text()
-	data_file.close()
+func load_data(content):
+	if content.length() == 0:
+		return
 	var json = JSON.parse(content)
 	var glyph_script = preload("res://glyph_image.gd")
 	var glyph_area_script = preload("res://glyph_area.gd")
@@ -62,8 +60,18 @@ func init_handlers():
 	pass
 
 func _ready():
+	if OS.is_debug_build():
+		# Read local user file
+		var data_file = File.new()
+		data_file.open("res://data.json", File.READ)
+		var content = data_file.get_as_text()
+		load_data(content)
+		data_file.close()
+	else:
+		# HTML release : load data.json through http. I could not find a way to export user file
+		
+		pass
 	draw_grid()
-	load_data()
 	init_handlers()
 
 func _unhandled_input(event):
