@@ -14,6 +14,8 @@ func load_data(content):
 	if content.length() == 0:
 		return
 	var json = JSON.parse(content)
+	if json.error != OK:
+		print("Unable to parse data json")
 	var glyph_script = preload("res://glyph_image.gd")
 	var glyph_area_script = preload("res://glyph_area.gd")
 	var collision_shape_script = preload("res://collision_shape.gd")
@@ -78,7 +80,7 @@ func _ready():
 		data_file.close()
 	else:
 		# HTML release : load data.json through http. I could not find a way to export the json file
-		load_data_file("/se_glyphs/output/data.json")
+		load_data_file("https://gentlemadscientist.github.io/se_glyphs/output/data.json")
 		
 		pass
 	draw_grid()
