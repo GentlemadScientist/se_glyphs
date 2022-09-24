@@ -78,7 +78,7 @@ func _ready():
 		data_file.close()
 	else:
 		# HTML release : load data.json through http. I could not find a way to export the json file
-		load_data("/se_glyphs/output/data.json")
+		load_data_file("/se_glyphs/output/data.json")
 		
 		pass
 	draw_grid()
