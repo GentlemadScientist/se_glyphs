@@ -1,7 +1,15 @@
 extends Node
 
 var glyphs = {}
-		
+
+func load_data_file(path):
+	$HTTPRequest.request(path)
+	pass
+	
+func _on_request_completed(result, response_code, headers, body):
+	if response_code >= 200 && response_code < 400:
+		load_data(body.get_string_from_utf8())
+	
 func load_data(content):
 	if content.length() == 0:
 		return
@@ -60,15 +68,17 @@ func init_handlers():
 	pass
 
 func _ready():
+	$HTTPRequest.connect("request_completed", self, "_on_request_completed")
 	if OS.is_debug_build():
 		# Read local user file
 		var data_file = File.new()
-		data_file.open("res://data.json", File.READ)
+		data_file.open("user://data.json", File.READ)
 		var content = data_file.get_as_text()
 		load_data(content)
 		data_file.close()
 	else:
-		# HTML release : load data.json through http. I could not find a way to export user file
+		# HTML release : load data.json through http. I could not find a way to export the json file
+		load_data("/se_glyphs/output/data.json")
 		
 		pass
 	draw_grid()

@@ -53,4 +53,7 @@ visible = false
 material_override = SubResource( 2 )
 material_overlay = SubResource( 3 )
 
+[node name="HTTPRequest" type="HTTPRequest" parent="."]
+timeout = 10.0
+
 [connection signal="input_event" from="symbol_3d_space/symbol/glyph_area" to="symbol_3d_space" method="_on_glyph_area_input_event"]
