@@ -19,6 +19,10 @@ config/icon="res://icon.png"
 Draw3d="*res://Draw3D.gd"
 Global="*res://global.gd"
 
+[global]
+
+theme=false
+
 [gui]
 
 common/drop_mouse_on_gui_input_disabled=true

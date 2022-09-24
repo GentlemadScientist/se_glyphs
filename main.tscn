@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -6,16 +6,71 @@
 [ext_resource path="res://glyph_image.gd" type="Script" id=4]
 [ext_resource path="res://glyph_area.gd" type="Script" id=5]
 [ext_resource path="res://collision_shape.gd" type="Script" id=6]
+[ext_resource path="res://glyph_label.gd" type="Script" id=7]
+[ext_resource path="res://assets/default_theme.tres" type="Theme" id=8]
+[ext_resource path="res://gui_glyphs_button.gd" type="Script" id=9]
+[ext_resource path="res://gui_button_display.gd" type="Script" id=10]
 
 [sub_resource type="SphereMesh" id=8]
 
 [sub_resource type="SphereShape" id=7]
+
+[sub_resource type="DynamicFontData" id=9]
+font_path = "res://assets/fonts/Montserrat-Regular.ttf"
+
+[sub_resource type="DynamicFont" id=10]
+size = 103
+use_filter = true
+font_data = SubResource( 9 )
 
 [sub_resource type="SpatialMaterial" id=2]
 
 [sub_resource type="ShaderMaterial" id=3]
 
 [node name="Main" type="Node"]
+
+[node name="GUI" type="MarginContainer" parent="."]
+anchor_left = 0.053
+anchor_right = 0.079
+anchor_bottom = 0.105
+margin_left = -51.272
+margin_top = 3.0
+margin_right = 38.104
+margin_bottom = 43.0
+theme = ExtResource( 8 )
+
+[node name="Background" type="NinePatchRect" parent="GUI"]
+margin_right = 116.0
+margin_bottom = 103.0
+
+[node name="sections" type="VBoxContainer" parent="GUI"]
+margin_right = 116.0
+margin_bottom = 103.0
+
+[node name="glyphs" type="MarginContainer" parent="GUI/sections"]
+margin_right = 116.0
+margin_bottom = 27.0
+
+[node name="Button" type="Button" parent="GUI/sections/glyphs"]
+margin_right = 116.0
+margin_bottom = 27.0
+focus_mode = 0
+toggle_mode = true
+pressed = true
+text = "Show Glyphs"
+script = ExtResource( 9 )
+
+[node name="display" type="MarginContainer" parent="GUI/sections"]
+margin_top = 31.0
+margin_right = 116.0
+margin_bottom = 58.0
+
+[node name="Button" type="Button" parent="GUI/sections/display"]
+margin_right = 116.0
+margin_bottom = 27.0
+focus_mode = 0
+text = "Show Glyphs"
+script = ExtResource( 10 )
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
 script = ExtResource( 1 )
@@ -24,15 +79,16 @@ script = ExtResource( 1 )
 timeout = 10.0
 
 [node name="symbol" type="Position3D" parent="symbol_3d_space"]
-visible = false
 
 [node name="glyph_image" type="Sprite3D" parent="symbol_3d_space/symbol"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1 )
+visible = false
 billboard = 1
 texture = ExtResource( 2 )
 script = ExtResource( 4 )
 
 [node name="glyph_area" type="Area" parent="symbol_3d_space/symbol"]
+visible = false
 script = ExtResource( 5 )
 
 [node name="MeshInstance" type="MeshInstance" parent="symbol_3d_space/symbol/glyph_area"]
@@ -45,8 +101,21 @@ transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
 shape = SubResource( 7 )
 script = ExtResource( 6 )
 
+[node name="Label3D" type="Label3D" parent="symbol_3d_space/symbol"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1, 1 )
+visible = false
+billboard = 1
+no_depth_test = true
+modulate = Color( 0, 0, 0, 1 )
+text = "ABCD"
+font = SubResource( 10 )
+script = ExtResource( 7 )
+__meta__ = {
+"_editor_description_": ""
+}
+
 [node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.88238 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30.8824 )
 fov = 90.0
 script = ExtResource( 3 )
 
@@ -55,5 +124,3 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.721, 0, 0 )
 visible = false
 material_override = SubResource( 2 )
 material_overlay = SubResource( 3 )
-
-[connection signal="input_event" from="symbol_3d_space/symbol/glyph_area" to="symbol_3d_space" method="_on_glyph_area_input_event"]
