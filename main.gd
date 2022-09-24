@@ -17,7 +17,7 @@ func load_data():
 	for key in json.result:
 		var data = json.result[key]
 		
-		if data.coord.x == 0 && data.coord.y == 0 && data.coord.z == 0:
+		if data.coord.x == 0 && data.coord.y == 0 && data.coord.z == 0 && data.se_code != 64:
 			glyphs[key] = data
 			continue # Undefined coords, still add to the db but do not display
 		
@@ -78,9 +78,10 @@ func _on_glyph_area_input_event(camera, event, position, normal, shape_idx, glyp
 		# Color the selected one
 		sphere.material_override = $"/root/Global".selected_material
 		# Color the linked ones
-		for link_key in glyphs[glyph_key].links.split(","):
-			if link_key.length() > 0:
-				if "sphere" in glyphs[link_key]:
-					glyphs[link_key].sphere.material_override = $"/root/Global".selected_material_link
+		if glyphs[glyph_key].links.length() > 0:
+			for link_key in glyphs[glyph_key].links.split(","):
+				if link_key.length() > 0 && link_key != "?":
+					if "sphere" in glyphs[link_key]:
+						glyphs[link_key].sphere.material_override = $"/root/Global".selected_material_link
 		
 	pass # Replace with function body.
