@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -10,8 +10,13 @@
 [ext_resource path="res://assets/default_theme.tres" type="Theme" id=8]
 [ext_resource path="res://gui_glyphs_button.gd" type="Script" id=9]
 [ext_resource path="res://gui_button_display.gd" type="Script" id=10]
-
-[sub_resource type="SphereMesh" id=8]
+[ext_resource path="res://Grid.gd" type="Script" id=11]
+[ext_resource path="res://assets/grid_red.tres" type="Material" id=12]
+[ext_resource path="res://assets/grid_green.tres" type="Material" id=13]
+[ext_resource path="res://assets/grid_arrow.tres" type="CylinderMesh" id=14]
+[ext_resource path="res://assets/grid_line.tres" type="CylinderMesh" id=15]
+[ext_resource path="res://assets/grid_blue.tres" type="Material" id=16]
+[ext_resource path="res://assets/sphere_mesh.tres" type="SphereMesh" id=17]
 
 [sub_resource type="SphereShape" id=7]
 
@@ -79,6 +84,7 @@ script = ExtResource( 1 )
 timeout = 10.0
 
 [node name="symbol" type="Position3D" parent="symbol_3d_space"]
+visible = false
 
 [node name="glyph_image" type="Sprite3D" parent="symbol_3d_space/symbol"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1 )
@@ -88,12 +94,11 @@ texture = ExtResource( 2 )
 script = ExtResource( 4 )
 
 [node name="glyph_area" type="Area" parent="symbol_3d_space/symbol"]
-visible = false
 script = ExtResource( 5 )
 
 [node name="MeshInstance" type="MeshInstance" parent="symbol_3d_space/symbol/glyph_area"]
 transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
-mesh = SubResource( 8 )
+mesh = ExtResource( 17 )
 skeleton = NodePath("../..")
 
 [node name="CollisionShape" type="CollisionShape" parent="symbol_3d_space/symbol/glyph_area"]
@@ -116,7 +121,6 @@ __meta__ = {
 
 [node name="Camera" type="Camera" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30.8824 )
-fov = 90.0
 script = ExtResource( 3 )
 
 [node name="ImmediateGeometry" type="ImmediateGeometry" parent="."]
@@ -124,3 +128,36 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.721, 0, 0 )
 visible = false
 material_override = SubResource( 2 )
 material_overlay = SubResource( 3 )
+
+[node name="Grid" type="Spatial" parent="."]
+script = ExtResource( 11 )
+
+[node name="X" type="MeshInstance" parent="Grid"]
+transform = Transform( 4.37114e-09, 0.1, -8.74228e-09, 0.1, -4.37114e-09, 0, -3.82137e-16, -8.74228e-09, -0.1, 1, 0, 0 )
+mesh = ExtResource( 14 )
+material/0 = ExtResource( 12 )
+
+[node name="Y" type="MeshInstance" parent="Grid"]
+transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 1, 0 )
+mesh = ExtResource( 14 )
+material/0 = ExtResource( 13 )
+
+[node name="Z" type="MeshInstance" parent="Grid"]
+transform = Transform( 1.91069e-16, 4.37114e-09, 0.1, 0.1, -4.37114e-09, 0, 4.37114e-09, 0.1, -4.37114e-09, 0, 0, 1 )
+mesh = ExtResource( 14 )
+material/0 = ExtResource( 16 )
+
+[node name="X_line" type="MeshInstance" parent="Grid"]
+transform = Transform( -8.74228e-10, -0.5, 8.74228e-10, 0, -2.18557e-08, -0.02, 0.02, -2.18557e-08, 3.82137e-17, 0, 0, 0 )
+mesh = ExtResource( 15 )
+material/0 = ExtResource( 12 )
+
+[node name="Y_line" type="MeshInstance" parent="Grid"]
+transform = Transform( 0.02, 0, 0, 0, 0.5, 0, 0, 0, 0.02, 0, 0, 0 )
+mesh = ExtResource( 15 )
+material/0 = ExtResource( 13 )
+
+[node name="Z_line" type="MeshInstance" parent="Grid"]
+transform = Transform( 0.02, 0, 0, 0, -2.18557e-08, -0.02, 0, 0.5, -8.74228e-10, 0, 0, 0 )
+mesh = ExtResource( 15 )
+material/0 = ExtResource( 16 )

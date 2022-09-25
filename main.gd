@@ -1,6 +1,7 @@
 extends Node
 
 var glyphs = {}
+var used_coord_map = {} # A map of references of coords to symbols, for easy access to a symbol at a given coord
 
 func load_data_file(path):
 	$HTTPRequest.request(path)
@@ -38,6 +39,12 @@ func load_data(content):
 		nodes.symbol = symbol
 		symbol.transform.origin = $"/root/Global".scale_multiplier * Vector3(data.coord.x, data.coord.y, data.coord.z)
 		
+		if !data.coord.x in used_coord_map:
+			used_coord_map[data.coord.x] = {}
+		if !data.coord.y in used_coord_map[data.coord.x]:
+			used_coord_map[data.coord.x][data.coord.y] = {}
+		used_coord_map[data.coord.x][data.coord.y][data.coord.x] = symbol
+		
 		var glyph_image = Sprite3D.new()
 		nodes.glyph_image = glyph_image
 		var texture = load(str("res://assets/glyph-a-",data.se_code,".png"))
@@ -52,7 +59,12 @@ func load_data(content):
 		glyph_label.font = $"/root/Global".font
 		glyph_label.font.size = 3 * $"/root/Global".scale_multiplier
 		
-		#glyph_label.text = str(data.coord.x,"\n",data.coord.y,"\n",data.coord.z) # Set dynamically
+		if $"/root/Global".display_button_current_state == 1 && "cartouche" in data: # Name
+			glyph_label.text = data.cartouche
+		elif $"/root/Global".display_button_current_state == 2 && "coord" in data: # Coord
+			glyph_label.text = str(data.coord.x,"\n",data.coord.y,"\n",data.coord.z) # Set dynamically
+		elif $"/root/Global".display_button_current_state == 3 && "codename" in data: # Codename
+			glyph_label.text = data.codename
 		glyph_label.billboard = SpatialMaterial.BILLBOARD_ENABLED
 		glyph_label.modulate = Color(0, 0, 0, 1)
 		glyph_label.set_script(label_script)
@@ -64,8 +76,7 @@ func load_data(content):
 		
 		var sphere = MeshInstance.new()
 		nodes.sphere = sphere
-		sphere.mesh = SphereMesh.new()
-		nodes.sphere_mesh = sphere.mesh
+		sphere.mesh = load('res://assets/sphere_mesh.tres')
 		sphere.scale = vec_scale / 2
 		area.add_child(sphere)
 		
@@ -83,6 +94,23 @@ func load_data(content):
 		add_child(symbol)
 		data.nodes = nodes
 		glyphs[key] = data
+	fill_empty_coords()
+
+func fill_empty_coords():
+	var vec_scale = $"/root/Global".scale_multiplier / 3 * Vector3(1,1,1)
+	for coord in all_ti_coordinate_list():
+		if (!coord.x in used_coord_map
+			|| !coord.y in used_coord_map[coord.x]
+			|| !coord.z in used_coord_map[coord.x][coord.y]
+		):
+			# Unused coord space : create empty sphere
+			var sphere = MeshInstance.new()
+			sphere.mesh = load('res://assets/sphere_mesh.tres')
+			sphere.material_override = load('res://assets/sphere_material_empty.tres')
+			sphere.transform.origin = coord * $"/root/Global".scale_multiplier
+			sphere.scale = vec_scale / 2
+			add_child(sphere)
+	pass
 
 func unload_data():
 	# Delete all instances
@@ -90,9 +118,27 @@ func unload_data():
 		if "nodes" in glyphs[key]:
 			glyphs[key].nodes.symbol.queue_free()
 	glyphs = {}
+	used_coord_map = {}
 
-func draw_grid():
-	pass
+# A function returning all possible coordinates of the truncated icosahedron we are dealing with
+func all_ti_coordinate_list():
+	# We need all even permutations (basically 3 shifts with triplets) for all combinations of positive/negative terms of 3 sets below
+	var t1 = [0, 0.18983879552606, 0.9818152737217]
+	var t2 = [0.20847820715387, 0.73564182776852, 0.6444904486331]
+	var t3 = [0.3373248250886, 0.39831700267993, 0.85296865578697]
+	
+	var result = []
+	for t in [t1, t2, t3]:
+		for n3 in [t[2], -t[2]]:
+			for n2 in [t[1], -t[1]]:
+				var n1_group = [t[0]]
+				if t[0] != 0:
+					n1_group.append(-t[0])
+				for n1 in n1_group:
+					result.append(Vector3(n1,n2,n3))
+					result.append(Vector3(n3,n1,n2))
+					result.append(Vector3(n2,n3,n1))
+	return result
 
 func init_handlers():
 	pass
@@ -111,7 +157,6 @@ func _ready():
 		load_data_file("https://gentlemadscientist.github.io/se_glyphs/output/data.json")
 		
 		pass
-	draw_grid()
 	init_handlers()
 
 func _unhandled_input(event):
@@ -124,13 +169,13 @@ func _unhandled_input(event):
 func _on_glyph_area_input_event(camera, event, position, normal, shape_idx, glyph_key:String, sphere: MeshInstance):
 	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
 		# Color the selected one
-		sphere.material_override = $"/root/Global".selected_material
+		sphere.material_override = load("res://assets/sphere_material_main.tres")
 		# Color the linked ones
-		if glyphs[glyph_key].links.length() > 0:
+		if "links" in glyphs[glyph_key] && glyphs[glyph_key].links.length() > 0:
 			for link_key in glyphs[glyph_key].links.split(","):
 				if link_key.length() > 0 && link_key != "?":
 					if "nodes" in glyphs[link_key] && "sphere" in glyphs[link_key].nodes:
-						glyphs[link_key].nodes.sphere.material_override = $"/root/Global".selected_material_link
+						glyphs[link_key].nodes.sphere.material_override = load("res://assets/sphere_material_secondary.tres")
 		
 	pass # Replace with function body.
 
@@ -149,9 +194,15 @@ func _on_display_button_pressed(button: Button):
 			if $"/root/Global".display_button_current_state == 0: # None
 				glyphs[key].nodes.glyph_label.text = ""
 			elif $"/root/Global".display_button_current_state == 1: # Name
-				glyphs[key].nodes.glyph_label.text = glyphs[key].cartouche
+				if "cartouche" in glyphs[key]:
+					glyphs[key].nodes.glyph_label.text = glyphs[key].cartouche
+				else:
+					glyphs[key].nodes.glyph_label.text = ""
 			elif $"/root/Global".display_button_current_state == 2: # Coords
 				glyphs[key].nodes.glyph_label.text = str(glyphs[key].coord.x, "\n", glyphs[key].coord.y, "\n", glyphs[key].coord.z)
 			elif $"/root/Global".display_button_current_state == 3: # Codename
-				glyphs[key].nodes.glyph_label.text = glyphs[key].codename
+				if "codename" in glyphs[key]:
+					glyphs[key].nodes.glyph_label.text = glyphs[key].codename
+				else:
+					glyphs[key].nodes.glyph_label.text = ""
 	
