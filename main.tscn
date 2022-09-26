@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=2]
+[gd_scene load_steps=24 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -8,7 +8,6 @@
 [ext_resource path="res://collision_shape.gd" type="Script" id=6]
 [ext_resource path="res://glyph_label.gd" type="Script" id=7]
 [ext_resource path="res://assets/default_theme.tres" type="Theme" id=8]
-[ext_resource path="res://gui_glyphs_button.gd" type="Script" id=9]
 [ext_resource path="res://gui_button_display.gd" type="Script" id=10]
 [ext_resource path="res://Grid.gd" type="Script" id=11]
 [ext_resource path="res://assets/grid_red.tres" type="Material" id=12]
@@ -17,8 +16,10 @@
 [ext_resource path="res://assets/grid_line.tres" type="CylinderMesh" id=15]
 [ext_resource path="res://assets/grid_blue.tres" type="Material" id=16]
 [ext_resource path="res://assets/sphere_mesh.tres" type="SphereMesh" id=17]
-
-[sub_resource type="SphereShape" id=7]
+[ext_resource path="res://scale_slider_script.gd" type="Script" id=18]
+[ext_resource path="res://fov_slider_script.gd" type="Script" id=19]
+[ext_resource path="res://gui_glyphs_chkbox.gd" type="Script" id=20]
+[ext_resource path="res://gui_chkbox_wireframe.gd" type="Script" id=21]
 
 [sub_resource type="DynamicFontData" id=9]
 font_path = "res://assets/fonts/Montserrat-Regular.ttf"
@@ -28,16 +29,14 @@ size = 103
 use_filter = true
 font_data = SubResource( 9 )
 
-[sub_resource type="SpatialMaterial" id=2]
-
-[sub_resource type="ShaderMaterial" id=3]
+[sub_resource type="SphereShape" id=7]
 
 [node name="Main" type="Node"]
 
 [node name="GUI" type="MarginContainer" parent="."]
 anchor_left = 0.053
-anchor_right = 0.079
-anchor_bottom = 0.105
+anchor_right = 0.25
+anchor_bottom = 0.25
 margin_left = -51.272
 margin_top = 3.0
 margin_right = 38.104
@@ -45,37 +44,72 @@ margin_bottom = 43.0
 theme = ExtResource( 8 )
 
 [node name="Background" type="NinePatchRect" parent="GUI"]
-margin_right = 116.0
-margin_bottom = 103.0
+margin_right = 291.0
+margin_bottom = 190.0
 
 [node name="sections" type="VBoxContainer" parent="GUI"]
-margin_right = 116.0
-margin_bottom = 103.0
+margin_right = 291.0
+margin_bottom = 190.0
 
 [node name="glyphs" type="MarginContainer" parent="GUI/sections"]
-margin_right = 116.0
-margin_bottom = 27.0
+margin_right = 291.0
+margin_bottom = 40.0
 
-[node name="Button" type="Button" parent="GUI/sections/glyphs"]
-margin_right = 116.0
-margin_bottom = 27.0
+[node name="CheckButton" type="CheckButton" parent="GUI/sections/glyphs"]
+margin_right = 291.0
+margin_bottom = 40.0
 focus_mode = 0
-toggle_mode = true
-pressed = true
-text = "Show Glyphs"
-script = ExtResource( 9 )
+script = ExtResource( 20 )
 
 [node name="display" type="MarginContainer" parent="GUI/sections"]
-margin_top = 31.0
-margin_right = 116.0
-margin_bottom = 58.0
+margin_top = 44.0
+margin_right = 291.0
+margin_bottom = 71.0
 
 [node name="Button" type="Button" parent="GUI/sections/display"]
-margin_right = 116.0
+margin_right = 291.0
 margin_bottom = 27.0
 focus_mode = 0
 text = "Show Glyphs"
 script = ExtResource( 10 )
+
+[node name="wireframe" type="MarginContainer" parent="GUI/sections"]
+margin_top = 75.0
+margin_right = 291.0
+margin_bottom = 115.0
+
+[node name="CheckButton" type="CheckButton" parent="GUI/sections/wireframe"]
+margin_right = 291.0
+margin_bottom = 40.0
+focus_mode = 0
+script = ExtResource( 21 )
+
+[node name="scale" type="MarginContainer" parent="GUI/sections"]
+margin_top = 119.0
+margin_right = 291.0
+margin_bottom = 135.0
+
+[node name="HSlider" type="HSlider" parent="GUI/sections/scale"]
+margin_right = 291.0
+margin_bottom = 16.0
+min_value = 0.1
+max_value = 2.0
+step = 0.1
+value = 1.0
+script = ExtResource( 18 )
+
+[node name="fov" type="MarginContainer" parent="GUI/sections"]
+margin_top = 139.0
+margin_right = 291.0
+margin_bottom = 155.0
+
+[node name="HSlider" type="HSlider" parent="GUI/sections/fov"]
+margin_right = 291.0
+margin_bottom = 16.0
+min_value = 50.0
+max_value = 130.0
+value = 70.0
+script = ExtResource( 19 )
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
 script = ExtResource( 1 )
@@ -101,14 +135,8 @@ transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
 mesh = ExtResource( 17 )
 skeleton = NodePath("../..")
 
-[node name="CollisionShape" type="CollisionShape" parent="symbol_3d_space/symbol/glyph_area"]
-transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
-shape = SubResource( 7 )
-script = ExtResource( 6 )
-
-[node name="Label3D" type="Label3D" parent="symbol_3d_space/symbol"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1, 1 )
-visible = false
+[node name="Label3D" type="Label3D" parent="symbol_3d_space/symbol/glyph_area/MeshInstance"]
+transform = Transform( 2, 0, 0, 0, 2, 0, 0, 0, 2, -2, 2, 2 )
 billboard = 1
 no_depth_test = true
 modulate = Color( 0, 0, 0, 1 )
@@ -119,15 +147,17 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="Camera" type="Camera" parent="."]
+[node name="CollisionShape" type="CollisionShape" parent="symbol_3d_space/symbol/glyph_area"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0, 0, 0 )
+shape = SubResource( 7 )
+script = ExtResource( 6 )
+
+[node name="Camera" type="Camera" parent="symbol_3d_space"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30.8824 )
 script = ExtResource( 3 )
 
-[node name="ImmediateGeometry" type="ImmediateGeometry" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.721, 0, 0 )
+[node name="draw" type="ImmediateGeometry" parent="symbol_3d_space"]
 visible = false
-material_override = SubResource( 2 )
-material_overlay = SubResource( 3 )
 
 [node name="Grid" type="Spatial" parent="."]
 script = ExtResource( 11 )

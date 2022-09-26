@@ -3,6 +3,11 @@ extends Node
 var glyphs = {}
 var used_coord_map = {} # A map of references of coords to symbols, for easy access to a symbol at a given coord
 
+var glyph_script = preload("res://glyph_image.gd")
+var glyph_area_script = preload("res://glyph_area.gd")
+var collision_shape_script = preload("res://collision_shape.gd")
+var label_script = preload("res://glyph_label.gd")
+
 func load_data_file(path):
 	$HTTPRequest.request(path)
 	pass
@@ -18,10 +23,6 @@ func load_data(content):
 	var json = JSON.parse(content)
 	if json.error != OK:
 		print("Unable to parse data json")
-	var glyph_script = preload("res://glyph_image.gd")
-	var glyph_area_script = preload("res://glyph_area.gd")
-	var collision_shape_script = preload("res://collision_shape.gd")
-	var label_script = preload("res://glyph_label.gd")
 	
 	var vec_scale = $"/root/Global".scale_multiplier / 3 * Vector3(1,1,1)
 	
@@ -38,12 +39,6 @@ func load_data(content):
 		var symbol = Position3D.new()
 		nodes.symbol = symbol
 		symbol.transform.origin = $"/root/Global".scale_multiplier * Vector3(data.coord.x, data.coord.y, data.coord.z)
-		
-		if !data.coord.x in used_coord_map:
-			used_coord_map[data.coord.x] = {}
-		if !data.coord.y in used_coord_map[data.coord.x]:
-			used_coord_map[data.coord.x][data.coord.y] = {}
-		used_coord_map[data.coord.x][data.coord.y][data.coord.x] = symbol
 		
 		var glyph_image = Sprite3D.new()
 		nodes.glyph_image = glyph_image
@@ -92,25 +87,70 @@ func load_data(content):
 		area.add_child(collision)
 		symbol.add_child(area)
 		add_child(symbol)
+		
+		if "codename" in data && data.codename != "center":
+			# Register as used only real nodes : no center, no custom ones
+			var used_x = stepify(data.coord.x, 0.000001)
+			var used_y = stepify(data.coord.y, 0.000001)
+			var used_z = stepify(data.coord.z, 0.000001)
+			if !used_x in used_coord_map:
+				used_coord_map[used_x] = {}
+			if !used_y in used_coord_map[used_x]:
+				used_coord_map[used_x][used_y] = {}
+
+			used_coord_map[used_x][used_y][used_z] = {
+				"key": key,
+				"nodes": nodes
+			}
+		
 		data.nodes = nodes
 		glyphs[key] = data
 	fill_empty_coords()
 
 func fill_empty_coords():
 	var vec_scale = $"/root/Global".scale_multiplier / 3 * Vector3(1,1,1)
+	var fill_count = 0
 	for coord in all_ti_coordinate_list():
-		if (!coord.x in used_coord_map
-			|| !coord.y in used_coord_map[coord.x]
-			|| !coord.z in used_coord_map[coord.x][coord.y]
+		var used_x = stepify(coord.x, 0.000001)
+		var used_y = stepify(coord.y, 0.000001)
+		var used_z = stepify(coord.z, 0.000001)
+		if (!used_x in used_coord_map
+			|| !used_y in used_coord_map[used_x]
+			|| !used_z in used_coord_map[used_x][used_y]
 		):
+			fill_count += 1
 			# Unused coord space : create empty sphere
 			var sphere = MeshInstance.new()
 			sphere.mesh = load('res://assets/sphere_mesh.tres')
 			sphere.material_override = load('res://assets/sphere_material_empty.tres')
 			sphere.transform.origin = coord * $"/root/Global".scale_multiplier
 			sphere.scale = vec_scale / 2
+			
+			var glyph_label = Label3D.new()
+			glyph_label.font = $"/root/Global".font
+			glyph_label.font.size = 3 * $"/root/Global".scale_multiplier
+			if $"/root/Global".display_button_current_state == 2: # Coord
+				glyph_label.text = str(coord.x,"\n",coord.y,"\n",coord.z) # Set dynamically
+			glyph_label.billboard = SpatialMaterial.BILLBOARD_ENABLED
+			glyph_label.modulate = Color(0.8, 0.8, 0.8, 1)
+			glyph_label.set_script(label_script)
+			sphere.add_child(glyph_label)
+			
+			if !coord.x in used_coord_map:
+				used_coord_map[coord.x] = {}
+			if !coord.y in used_coord_map[coord.x]:
+				used_coord_map[coord.x][coord.y] = {}
+			used_coord_map[coord.x][coord.y][coord.z] = {
+				"nodes": {
+					"sphere": sphere,
+					"glyph_label": glyph_label
+				}
+			}
+		
 			add_child(sphere)
-	pass
+	print("fill: ",fill_count)
+	connect_siblings()
+	draw_wireframe()
 
 func unload_data():
 	# Delete all instances
@@ -139,6 +179,50 @@ func all_ti_coordinate_list():
 					result.append(Vector3(n3,n1,n2))
 					result.append(Vector3(n2,n3,n1))
 	return result
+
+# Adds information about 3 nearest siblings to the data def
+func connect_siblings():
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				var min_angle = 180 # To be reduced
+				var candidates = []
+				if !"siblings" in def:
+					def.siblings = {}
+				# naive crawl looking for siblings
+				for x1 in used_coord_map:
+					for y1 in used_coord_map[x1]:
+						for z1 in used_coord_map[x1][y1]:
+							if (!(x == x1 && y == y1 && z == z1)):
+								var tmp_min = Vector3(x1,y1,z1).distance_squared_to (Vector3(x,y,z))
+								if tmp_min < min_angle:
+									min_angle = tmp_min
+								if tmp_min <= 0.2:
+									candidates.append(Vector3(x1,y1,z1))
+				used_coord_map[x][y][z]["siblings"] = candidates
+	pass
+
+func draw_wireframe():
+	var connections = {}
+	var draw = $draw
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				var key1 = str(x,y,z)
+				for sibling in def.siblings:
+					var key2 = str(sibling.x, sibling.y, sibling.z)
+					if key2 in connections && connections[key2] == key1:
+						# A shape has been drawn from sibling to current one already
+						continue
+					if !key1 in connections:
+						connections[key1] = key2
+					draw.begin(Mesh.PRIMITIVE_LINE_STRIP)
+					draw.add_vertex(Vector3(x,y,z) * $"/root/Global".scale_multiplier)
+					draw.add_vertex(Vector3(sibling.x,sibling.y,sibling.z) * $"/root/Global".scale_multiplier)
+					draw.end()
+
 
 func init_handlers():
 	pass
@@ -189,20 +273,45 @@ func _on_glyphs_button_pressed(button_pressed):
 func _on_display_button_pressed(button: Button):
 	$"/root/Global".display_button_current_state = $"/root/Global".get_next_state($"/root/Global".display_button_current_state, $"/root/Global".display_button_states)
 	var next_state = $"/root/Global".get_next_state($"/root/Global".display_button_current_state, $"/root/Global".display_button_states)
-	for key in glyphs:
-		if "glyph_label" in glyphs[key].nodes:
-			if $"/root/Global".display_button_current_state == 0: # None
-				glyphs[key].nodes.glyph_label.text = ""
-			elif $"/root/Global".display_button_current_state == 1: # Name
-				if "cartouche" in glyphs[key]:
-					glyphs[key].nodes.glyph_label.text = glyphs[key].cartouche
-				else:
-					glyphs[key].nodes.glyph_label.text = ""
-			elif $"/root/Global".display_button_current_state == 2: # Coords
-				glyphs[key].nodes.glyph_label.text = str(glyphs[key].coord.x, "\n", glyphs[key].coord.y, "\n", glyphs[key].coord.z)
-			elif $"/root/Global".display_button_current_state == 3: # Codename
-				if "codename" in glyphs[key]:
-					glyphs[key].nodes.glyph_label.text = glyphs[key].codename
-				else:
-					glyphs[key].nodes.glyph_label.text = ""
 	
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				if "glyph_label" in def.nodes:
+					if $"/root/Global".display_button_current_state == 0: # None
+						if "key" in def:
+							glyphs[def["key"]].nodes.glyph_label.text = ""
+					elif $"/root/Global".display_button_current_state == 1: # Name
+						if "key" in def && "cartouche" in glyphs[def["key"]]:
+							def.nodes.glyph_label.text = glyphs[def["key"]].cartouche
+						else:
+							def.nodes.glyph_label.text = ""
+					elif $"/root/Global".display_button_current_state == 2: # Coords
+						def.nodes.glyph_label.text = str(x, "\n", y, "\n", z)
+					elif $"/root/Global".display_button_current_state == 3: # Codename
+						if "key" in def && "codename" in glyphs[def["key"]]:
+							def.nodes.glyph_label.text = glyphs[def["key"]].codename
+						else:
+							def.nodes.glyph_label.text = ""
+	
+func _on_scale_changed(value, slider: HSlider):
+	var default_scale = $"/root/Global".scale_multiplier * Vector3(1,1,1) / 6
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				if "sphere" in def.nodes:
+					var sphere_node: MeshInstance = def.nodes.sphere
+					sphere_node.scale = default_scale * value
+					if "key" in def:
+						# Original data
+						def.nodes.glyph_label.font.size = 3 * $"/root/Global".scale_multiplier * value
+
+func _on_wireframe_button_pressed(button_pressed):
+	$draw.visible = button_pressed
+	pass
+
+func _on_fov_changed(value, slider: HSlider):
+	$Camera.fov = value
+	print("NEW VALUE", value)
