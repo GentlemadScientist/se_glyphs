@@ -59,6 +59,7 @@ margin_bottom = 40.0
 margin_right = 291.0
 margin_bottom = 40.0
 focus_mode = 0
+pressed = true
 script = ExtResource( 20 )
 
 [node name="display" type="MarginContainer" parent="GUI/sections"]
