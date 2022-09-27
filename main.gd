@@ -28,6 +28,7 @@ func load_data(content):
 	
 	for key in json.result:
 		var data = json.result[key]
+		data.coord = Vector3(data.coord.x, data.coord.y, data.coord.z)
 		var nodes = {}; # A reference to all new nodes, to be able to delete them
 		
 		if data.coord.x == 0 && data.coord.y == 0 && data.coord.z == 0 && data.se_code != 64:
@@ -40,14 +41,20 @@ func load_data(content):
 		nodes.symbol = symbol
 		symbol.transform.origin = $"/root/Global".scale_multiplier * Vector3(data.coord.x, data.coord.y, data.coord.z)
 		
+		var sphere = MeshInstance.new()
+		nodes.sphere = sphere
+		sphere.mesh = load('res://assets/sphere_mesh.tres')
+		sphere.scale = vec_scale / 4
+		symbol.add_child(sphere)
+		
 		var glyph_image = Sprite3D.new()
 		nodes.glyph_image = glyph_image
 		var texture = load(str("res://assets/glyph-a-",data.se_code,".png"))
 		glyph_image.texture = texture
 		glyph_image.billboard = SpatialMaterial.BILLBOARD_ENABLED
 		glyph_image.set_script(glyph_script)
-		glyph_image.scale = vec_scale
-		symbol.add_child(glyph_image)
+		glyph_image.scale = vec_scale / 4
+		sphere.add_child(glyph_image)
 		
 		var glyph_label = Label3D.new()
 		nodes.glyph_label = glyph_label
@@ -63,17 +70,11 @@ func load_data(content):
 		glyph_label.billboard = SpatialMaterial.BILLBOARD_ENABLED
 		glyph_label.modulate = Color(0, 0, 0, 1)
 		glyph_label.set_script(label_script)
-		symbol.add_child(glyph_label)
+		sphere.add_child(glyph_label)
 		
 		var area = Area.new()
 		nodes.area = area
 		area.set_script(glyph_area_script)
-		
-		var sphere = MeshInstance.new()
-		nodes.sphere = sphere
-		sphere.mesh = load('res://assets/sphere_mesh.tres')
-		sphere.scale = vec_scale / 2
-		area.add_child(sphere)
 		
 		area.connect("input_event", self, "_on_glyph_area_input_event", [key, sphere])
 		
@@ -82,10 +83,10 @@ func load_data(content):
 		var sphereShape = SphereShape.new()
 		nodes.collision_sphereShape = sphereShape
 		collision.shape = sphereShape
-		collision.scale = vec_scale / 2
 		collision.set_script(collision_shape_script)
 		area.add_child(collision)
-		symbol.add_child(area)
+		sphere.add_child(area)
+		
 		add_child(symbol)
 		
 		if "codename" in data && data.codename != "center":
@@ -120,15 +121,20 @@ func fill_empty_coords():
 		):
 			fill_count += 1
 			# Unused coord space : create empty sphere
+			
+			var symbol = Position3D.new()
+			symbol.transform.origin = $"/root/Global".scale_multiplier * coord
+			add_child(symbol)
+			
 			var sphere = MeshInstance.new()
 			sphere.mesh = load('res://assets/sphere_mesh.tres')
 			sphere.material_override = load('res://assets/sphere_material_empty.tres')
-			sphere.transform.origin = coord * $"/root/Global".scale_multiplier
-			sphere.scale = vec_scale / 2
+			sphere.scale = vec_scale / 4
+			symbol.add_child(sphere)
 			
 			var glyph_label = Label3D.new()
 			glyph_label.font = $"/root/Global".font
-			glyph_label.font.size = 3 * $"/root/Global".scale_multiplier
+			glyph_label.font.size = $"/root/Global".scale_multiplier
 			if $"/root/Global".display_button_current_state == 2: # Coord
 				glyph_label.text = str(coord.x,"\n",coord.y,"\n",coord.z) # Set dynamically
 			glyph_label.billboard = SpatialMaterial.BILLBOARD_ENABLED
@@ -146,11 +152,10 @@ func fill_empty_coords():
 					"glyph_label": glyph_label
 				}
 			}
-		
-			add_child(sphere)
 	print("fill: ",fill_count)
 	connect_siblings()
 	draw_wireframe()
+	tests()
 
 func unload_data():
 	# Delete all instances
@@ -205,7 +210,7 @@ func connect_siblings():
 
 func draw_wireframe():
 	var connections = {}
-	var draw = $draw
+	var draw = $draw_wireframe
 	for x in used_coord_map:
 		for y in used_coord_map[x]:
 			for z in used_coord_map[x][y]:
@@ -223,9 +228,16 @@ func draw_wireframe():
 					draw.add_vertex(Vector3(sibling.x,sibling.y,sibling.z) * $"/root/Global".scale_multiplier)
 					draw.end()
 
+func draw_hexgrid():
+	pass
 
 func init_handlers():
 	pass
+	
+func tests():
+	var arrow: Vector3 = glyphs["H"].coord
+	var zorro: Vector3 = glyphs["AN"].coord
+	var wing: Vector3 = glyphs["AC"].coord
 
 func _ready():
 	$HTTPRequest.connect("request_completed", self, "_on_request_completed")
@@ -242,6 +254,21 @@ func _ready():
 		
 		pass
 	init_handlers()
+
+func _process(delta):
+	if $"/root/Global".opaque_mode == true && "X" in glyphs:
+		var edge_distance_squared = $Camera.transform.origin.distance_squared_to(glyphs["X"].coord) #+ pow($"/root/Global".scale_multiplier, 2)
+		for x in used_coord_map:
+			for y in used_coord_map[x]:
+				for z in used_coord_map[x][y]:
+					if "nodes" in used_coord_map[x][y][z] && "sphere" in used_coord_map[x][y][z]["nodes"]:
+						var distance_to_node_squared = $Camera.transform.origin.distance_squared_to(Vector3(x,y,z))
+						if distance_to_node_squared > edge_distance_squared:
+							used_coord_map[x][y][z]["nodes"]["sphere"].visible = false
+						else:
+							used_coord_map[x][y][z]["nodes"]["sphere"].visible = true
+							
+						
 
 func _unhandled_input(event):
 	# This is (for some reason) called before children's input_event. So we want to reset the state here, and handle special case inside input_event
@@ -296,7 +323,7 @@ func _on_display_button_pressed(button: Button):
 							def.nodes.glyph_label.text = ""
 	
 func _on_scale_changed(value, slider: HSlider):
-	var default_scale = $"/root/Global".scale_multiplier * Vector3(1,1,1) / 6
+	var default_scale = $"/root/Global".scale_multiplier * Vector3(1,1,1) / 12
 	for x in used_coord_map:
 		for y in used_coord_map[x]:
 			for z in used_coord_map[x][y]:
@@ -304,14 +331,21 @@ func _on_scale_changed(value, slider: HSlider):
 				if "sphere" in def.nodes:
 					var sphere_node: MeshInstance = def.nodes.sphere
 					sphere_node.scale = default_scale * value
-					if "key" in def:
-						# Original data
-						def.nodes.glyph_label.font.size = 3 * $"/root/Global".scale_multiplier * value
 
 func _on_wireframe_button_pressed(button_pressed):
-	$draw.visible = button_pressed
-	pass
+	$draw_wireframe.visible = button_pressed
 
 func _on_fov_changed(value, slider: HSlider):
 	$Camera.fov = value
 	print("NEW VALUE", value)
+
+func _on_hexframe_button_pressed(button_pressed):
+	$draw_hexgrid.visible = button_pressed
+	
+func _on_opaque_button_pressed(button_pressed):
+	$"/root/Global".opaque_mode = button_pressed
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				if "nodes" in used_coord_map[x][y][z] && "sphere" in used_coord_map[x][y][z]["nodes"]:
+					used_coord_map[x][y][z]["nodes"]["sphere"].visible = true

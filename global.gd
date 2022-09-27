@@ -1,10 +1,12 @@
 extends Node
 
-var scale_multiplier = 10
+var scale_multiplier : float = 20
 var font = init_default_dynamic_font()
 
 var display_button_states = ["None", "Name", "Coords", "Codename"]
 var display_button_current_state = 1
+
+var opaque_mode = false
 
 func get_next_state(el, array: Array):
 	if el >= array.size() - 1:
