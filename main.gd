@@ -89,8 +89,8 @@ func load_data(content):
 		
 		add_child(symbol)
 		
-		if "codename" in data && data.codename != "center":
-			# Register as used only real nodes : no center, no custom ones
+		if "codename" in data:
+			# Register as used only real nodes : no custom ones
 			var used_x = stepify(data.coord.x, 0.000001)
 			var used_y = stepify(data.coord.y, 0.000001)
 			var used_z = stepify(data.coord.z, 0.000001)
