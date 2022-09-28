@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=2]
+[gd_scene load_steps=27 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -7,7 +7,7 @@
 [ext_resource path="res://glyph_area.gd" type="Script" id=5]
 [ext_resource path="res://collision_shape.gd" type="Script" id=6]
 [ext_resource path="res://glyph_label.gd" type="Script" id=7]
-[ext_resource path="res://assets/default_theme.tres" type="Theme" id=8]
+[ext_resource path="res://assets/text_theme.tres" type="Theme" id=8]
 [ext_resource path="res://gui_hexframe_chkbox.gd" type="Script" id=9]
 [ext_resource path="res://gui_button_display.gd" type="Script" id=10]
 [ext_resource path="res://Grid.gd" type="Script" id=11]
@@ -22,6 +22,7 @@
 [ext_resource path="res://gui_glyphs_chkbox.gd" type="Script" id=20]
 [ext_resource path="res://gui_chkbox_wireframe.gd" type="Script" id=21]
 [ext_resource path="res://gui_opaque_chkbox.gd" type="Script" id=22]
+[ext_resource path="res://assets/wireframe_hex_material.tres" type="Material" id=23]
 
 [sub_resource type="DynamicFontData" id=9]
 font_path = "res://assets/fonts/Montserrat-Regular.ttf"
@@ -61,7 +62,9 @@ margin_bottom = 40.0
 margin_right = 291.0
 margin_bottom = 40.0
 focus_mode = 0
+theme = ExtResource( 8 )
 pressed = true
+text = "Show Glyphs"
 script = ExtResource( 20 )
 
 [node name="display" type="MarginContainer" parent="GUI/sections"]
@@ -85,6 +88,7 @@ margin_bottom = 115.0
 margin_right = 291.0
 margin_bottom = 40.0
 focus_mode = 0
+text = "Wireframe (icosahedron)"
 script = ExtResource( 21 )
 
 [node name="scale" type="MarginContainer" parent="GUI/sections"]
@@ -123,6 +127,7 @@ margin_bottom = 199.0
 margin_right = 291.0
 margin_bottom = 40.0
 focus_mode = 0
+text = "2D hex siblings mode"
 script = ExtResource( 9 )
 
 [node name="opaque" type="MarginContainer" parent="GUI/sections"]
@@ -134,6 +139,7 @@ margin_bottom = 243.0
 margin_right = 291.0
 margin_bottom = 40.0
 focus_mode = 0
+text = "Opaque mode"
 script = ExtResource( 22 )
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
@@ -186,6 +192,7 @@ visible = false
 
 [node name="draw_hexgrid" type="ImmediateGeometry" parent="symbol_3d_space"]
 visible = false
+material_override = ExtResource( 23 )
 
 [node name="Grid" type="Spatial" parent="."]
 script = ExtResource( 11 )

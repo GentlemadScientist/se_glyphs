@@ -7,6 +7,7 @@ var display_button_states = ["None", "Name", "Coords", "Codename"]
 var display_button_current_state = 1
 
 var opaque_mode = false
+var grid_siblings_mode = false
 
 func get_next_state(el, array: Array):
 	if el >= array.size() - 1:

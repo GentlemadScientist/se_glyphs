@@ -152,9 +152,10 @@ func fill_empty_coords():
 					"glyph_label": glyph_label
 				}
 			}
-	print("fill: ",fill_count)
 	connect_siblings()
 	draw_wireframe()
+	connect_grid_siblings()
+	#draw_hexgrid()
 	tests()
 
 func unload_data():
@@ -191,7 +192,6 @@ func connect_siblings():
 		for y in used_coord_map[x]:
 			for z in used_coord_map[x][y]:
 				var def = used_coord_map[x][y][z]
-				var min_angle = 180 # To be reduced
 				var candidates = []
 				if !"siblings" in def:
 					def.siblings = {}
@@ -200,17 +200,37 @@ func connect_siblings():
 					for y1 in used_coord_map[x1]:
 						for z1 in used_coord_map[x1][y1]:
 							if (!(x == x1 && y == y1 && z == z1)):
-								var tmp_min = Vector3(x1,y1,z1).distance_squared_to (Vector3(x,y,z))
-								if tmp_min < min_angle:
-									min_angle = tmp_min
+								var tmp_min = Vector3(x1,y1,z1).distance_squared_to(Vector3(x,y,z))
 								if tmp_min <= 0.2:
 									candidates.append(Vector3(x1,y1,z1))
 				used_coord_map[x][y][z]["siblings"] = candidates
-	pass
+				
+# Adds information about the nearest siblings on the 2d hex grid
+func connect_grid_siblings():
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				var key = def["key"]
+				var candidates = []
+				if !"grid_siblings" in def:
+					def.grid_siblings = {}
+				# naive crawl looking for siblings
+				for x1 in used_coord_map:
+					for y1 in used_coord_map[x1]:
+						for z1 in used_coord_map[x1][y1]:
+							var def1 = used_coord_map[x1][y1][z1]
+							var key1 = def1["key"]
+							if (!(x == x1 && y == y1 && z == z1)):
+								if (abs(glyphs[key]["a"]-glyphs[key1]["a"])+abs(glyphs[key]["b"]-glyphs[key1]["b"])+abs(glyphs[key]["c"]-glyphs[key1]["c"])) == 1:
+									candidates.append({"x": x1, "y": y1, "z": z1})
+				used_coord_map[x][y][z]["grid_siblings"] = candidates
 
 func draw_wireframe():
 	var connections = {}
 	var draw = $draw_wireframe
+	draw.begin(Mesh.PRIMITIVE_LINES)
+	draw.set_color(Color(1,0,0,1))
 	for x in used_coord_map:
 		for y in used_coord_map[x]:
 			for z in used_coord_map[x][y]:
@@ -223,13 +243,30 @@ func draw_wireframe():
 						continue
 					if !key1 in connections:
 						connections[key1] = key2
-					draw.begin(Mesh.PRIMITIVE_LINE_STRIP)
 					draw.add_vertex(Vector3(x,y,z) * $"/root/Global".scale_multiplier)
 					draw.add_vertex(Vector3(sibling.x,sibling.y,sibling.z) * $"/root/Global".scale_multiplier)
-					draw.end()
+	draw.end()
 
 func draw_hexgrid():
-	pass
+	var connections = {}
+	var draw = $draw_hexgrid
+	draw.begin(Mesh.PRIMITIVE_LINES)
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				var key1 = str(x,y,z)
+				for sibling in def.grid_siblings:
+					var key2 = str(sibling.x, sibling.y, sibling.z)
+					if key2 in connections && connections[key2] == key1:
+						# A shape has been drawn from sibling to current one already
+						continue
+					if !key1 in connections:
+						connections[key1] = key2
+					draw.add_vertex(Vector3(x,y,z) * $"/root/Global".scale_multiplier)
+					draw.add_vertex(Vector3(sibling.x,sibling.y,sibling.z) * $"/root/Global".scale_multiplier)
+	draw.end()
+
 
 func init_handlers():
 	pass
@@ -276,19 +313,37 @@ func _unhandled_input(event):
 		for key in glyphs:
 			if "nodes" in glyphs[key] && "sphere" in glyphs[key].nodes:
 				glyphs[key].nodes.sphere.material_override = null
+				
+func recolor_siblings(glyph_key, sphere):
+	# Color the selected one
+	sphere.material_override = load("res://assets/sphere_material_main.tres")
+	# Color the linked ones
+	if "links" in glyphs[glyph_key] && glyphs[glyph_key].links.length() > 0:
+		for link_key in glyphs[glyph_key].links.split(","):
+			if link_key.length() > 0 && link_key != "?":
+				if "nodes" in glyphs[link_key] && "sphere" in glyphs[link_key].nodes:
+					glyphs[link_key].nodes.sphere.material_override = load("res://assets/sphere_material_secondary.tres")
+
+func recolor_grid_siblings(glyph_key, sphere):
+	# Color the selected one
+	sphere.material_override = load("res://assets/sphere_material_main.tres")
+	var used_x = stepify(glyphs[glyph_key].coord.x, 0.000001)
+	var used_y = stepify(glyphs[glyph_key].coord.y, 0.000001)
+	var used_z = stepify(glyphs[glyph_key].coord.z, 0.000001)
+	var def = used_coord_map[used_x][used_y][used_z]
+	if "grid_siblings" in def:
+		for link_vec in def.grid_siblings:
+			var link_def = used_coord_map[link_vec.x][link_vec.y][link_vec.z]
+			if "nodes" in link_def && "sphere" in link_def.nodes:
+				link_def.nodes.sphere.material_override = load("res://assets/sphere_material_secondary.tres")
+	
 
 func _on_glyph_area_input_event(camera, event, position, normal, shape_idx, glyph_key:String, sphere: MeshInstance):
 	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
-		# Color the selected one
-		sphere.material_override = load("res://assets/sphere_material_main.tres")
-		# Color the linked ones
-		if "links" in glyphs[glyph_key] && glyphs[glyph_key].links.length() > 0:
-			for link_key in glyphs[glyph_key].links.split(","):
-				if link_key.length() > 0 && link_key != "?":
-					if "nodes" in glyphs[link_key] && "sphere" in glyphs[link_key].nodes:
-						glyphs[link_key].nodes.sphere.material_override = load("res://assets/sphere_material_secondary.tres")
-		
-	pass # Replace with function body.
+		if $"/root/Global".grid_siblings_mode:
+			recolor_grid_siblings(glyph_key, sphere)
+		else:
+			recolor_siblings(glyph_key, sphere)
 
 
 func _on_glyphs_button_pressed(button_pressed):
@@ -337,9 +392,12 @@ func _on_wireframe_button_pressed(button_pressed):
 
 func _on_fov_changed(value, slider: HSlider):
 	$Camera.fov = value
-	print("NEW VALUE", value)
 
 func _on_hexframe_button_pressed(button_pressed):
+	$"/root/Global".grid_siblings_mode = button_pressed
+	for key in glyphs:
+		if "nodes" in glyphs[key] && "sphere" in glyphs[key].nodes:
+			glyphs[key].nodes.sphere.material_override = null
 	$draw_hexgrid.visible = button_pressed
 	
 func _on_opaque_button_pressed(button_pressed):
