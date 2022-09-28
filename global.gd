@@ -8,6 +8,8 @@ var display_button_current_state = 1
 
 var opaque_mode = false
 var grid_siblings_mode = false
+var center_hidden = false
+var camera_hide_radius_squared = 0
 
 func get_next_state(el, array: Array):
 	if el >= array.size() - 1:

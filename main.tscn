@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=30 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -24,6 +24,8 @@
 [ext_resource path="res://gui_opaque_chkbox.gd" type="Script" id=22]
 [ext_resource path="res://assets/wireframe_hex_material.tres" type="Material" id=23]
 [ext_resource path="res://gui_button_hidecenter.gd" type="Script" id=24]
+[ext_resource path="res://gui_button_highlight_edge.gd" type="Script" id=25]
+[ext_resource path="res://gui_slider_sphere_hide.gd" type="Script" id=26]
 
 [sub_resource type="DynamicFontData" id=9]
 font_path = "res://assets/fonts/Montserrat-Regular.ttf"
@@ -49,11 +51,11 @@ theme = ExtResource( 8 )
 
 [node name="Background" type="NinePatchRect" parent="GUI"]
 margin_right = 337.0
-margin_bottom = 287.0
+margin_bottom = 351.0
 
 [node name="sections" type="VBoxContainer" parent="GUI"]
 margin_right = 337.0
-margin_bottom = 287.0
+margin_bottom = 351.0
 
 [node name="glyphs" type="MarginContainer" parent="GUI/sections"]
 margin_right = 337.0
@@ -154,6 +156,29 @@ margin_bottom = 40.0
 focus_mode = 0
 text = "Hide center (also cam to center)"
 script = ExtResource( 24 )
+
+[node name="highlight_edges" type="MarginContainer" parent="GUI/sections"]
+margin_top = 291.0
+margin_right = 337.0
+margin_bottom = 331.0
+
+[node name="CheckButton" type="CheckButton" parent="GUI/sections/highlight_edges"]
+margin_right = 337.0
+margin_bottom = 40.0
+focus_mode = 0
+text = "Highlight 2d edge nodes"
+script = ExtResource( 25 )
+
+[node name="sphere_hide" type="MarginContainer" parent="GUI/sections"]
+margin_top = 335.0
+margin_right = 337.0
+margin_bottom = 351.0
+
+[node name="HSlider" type="HSlider" parent="GUI/sections/sphere_hide"]
+margin_right = 337.0
+margin_bottom = 16.0
+max_value = 20.0
+script = ExtResource( 26 )
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
 script = ExtResource( 1 )

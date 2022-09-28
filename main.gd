@@ -293,17 +293,21 @@ func _ready():
 	init_handlers()
 
 func _process(delta):
-	if $"/root/Global".opaque_mode == true && "XXX" in glyphs:
-		var edge_distance_squared = $Camera.transform.origin.distance_squared_to(glyphs["XXX"].coord) #+ pow($"/root/Global".scale_multiplier, 2)
-		for x in used_coord_map:
-			for y in used_coord_map[x]:
-				for z in used_coord_map[x][y]:
-					if "nodes" in used_coord_map[x][y][z] && "sphere" in used_coord_map[x][y][z]["nodes"]:
-						var distance_to_node_squared = $Camera.transform.origin.distance_squared_to(Vector3(x,y,z))
-						if distance_to_node_squared > edge_distance_squared:
-							used_coord_map[x][y][z]["nodes"]["sphere"].visible = false
-						else:
-							used_coord_map[x][y][z]["nodes"]["sphere"].visible = true
+	var edge_distance_squared = $Camera.transform.origin.distance_squared_to(Vector3(0,0,0)) #+ pow($"/root/Global".scale_multiplier, 2)
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				if "nodes" in used_coord_map[x][y][z] && "sphere" in used_coord_map[x][y][z]["nodes"]:
+					var sphere = used_coord_map[x][y][z]["nodes"].sphere
+					var distance_to_node_squared = $Camera.transform.origin.distance_squared_to(Vector3(x,y,z))
+					if $"/root/Global".opaque_mode == true && distance_to_node_squared > edge_distance_squared:
+						sphere.visible = false
+					elif $"/root/Global".center_hidden && used_coord_map[x][y][z].key == "XXX":
+						sphere.visible = false
+					elif sphere.get_parent().transform.origin.distance_squared_to($Camera.transform.origin) < $"/root/Global".camera_hide_radius_squared:
+						sphere.visible = false
+					else:
+						sphere.visible = true
 							
 						
 
@@ -409,8 +413,23 @@ func _on_opaque_button_pressed(button_pressed):
 					used_coord_map[x][y][z]["nodes"]["sphere"].visible = true
 
 func _on_disable_center_pressed(button_pressed):
+	$"/root/Global".center_hidden = button_pressed
 	if button_pressed:
-		glyphs["XXX"].nodes.sphere.visible = false
 		$Camera.transform.origin = Vector3(0,0,0)
-	else:
-		glyphs["XXX"].nodes.sphere.visible = true
+
+func _on_highlight_edges_pressed(button_pressed):
+	var default_mesh = load("res://assets/sphere_mesh.tres")
+	var selected_mesh = load("res://assets/sphere_mesh_selected.tres")
+	# Color the linked ones
+	for x in used_coord_map:
+		for y in used_coord_map[x]:
+			for z in used_coord_map[x][y]:
+				var def = used_coord_map[x][y][z]
+				if "grid_siblings" in def && len(def.grid_siblings) == 2:
+					if button_pressed:
+						def.nodes.sphere.mesh = selected_mesh
+					else:
+						def.nodes.sphere.mesh = default_mesh
+
+func _on_sphere_hide_changed(value, slider: HSlider):
+	$"/root/Global".camera_hide_radius_squared	= value * value
