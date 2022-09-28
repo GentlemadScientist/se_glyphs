@@ -407,3 +407,10 @@ func _on_opaque_button_pressed(button_pressed):
 			for z in used_coord_map[x][y]:
 				if "nodes" in used_coord_map[x][y][z] && "sphere" in used_coord_map[x][y][z]["nodes"]:
 					used_coord_map[x][y][z]["nodes"]["sphere"].visible = true
+
+func _on_disable_center_pressed(button_pressed):
+	if button_pressed:
+		glyphs["XXX"].nodes.sphere.visible = false
+		$Camera.transform.origin = Vector3(0,0,0)
+	else:
+		glyphs["XXX"].nodes.sphere.visible = true

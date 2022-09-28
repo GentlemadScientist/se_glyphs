@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -23,6 +23,7 @@
 [ext_resource path="res://gui_chkbox_wireframe.gd" type="Script" id=21]
 [ext_resource path="res://gui_opaque_chkbox.gd" type="Script" id=22]
 [ext_resource path="res://assets/wireframe_hex_material.tres" type="Material" id=23]
+[ext_resource path="res://gui_button_hidecenter.gd" type="Script" id=24]
 
 [sub_resource type="DynamicFontData" id=9]
 font_path = "res://assets/fonts/Montserrat-Regular.ttf"
@@ -47,19 +48,19 @@ margin_bottom = 43.0
 theme = ExtResource( 8 )
 
 [node name="Background" type="NinePatchRect" parent="GUI"]
-margin_right = 291.0
-margin_bottom = 243.0
+margin_right = 337.0
+margin_bottom = 287.0
 
 [node name="sections" type="VBoxContainer" parent="GUI"]
-margin_right = 291.0
-margin_bottom = 243.0
+margin_right = 337.0
+margin_bottom = 287.0
 
 [node name="glyphs" type="MarginContainer" parent="GUI/sections"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 40.0
 
 [node name="CheckButton" type="CheckButton" parent="GUI/sections/glyphs"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 40.0
 focus_mode = 0
 theme = ExtResource( 8 )
@@ -69,11 +70,11 @@ script = ExtResource( 20 )
 
 [node name="display" type="MarginContainer" parent="GUI/sections"]
 margin_top = 44.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 71.0
 
 [node name="Button" type="Button" parent="GUI/sections/display"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 27.0
 focus_mode = 0
 text = "Show Glyphs"
@@ -81,11 +82,11 @@ script = ExtResource( 10 )
 
 [node name="wireframe" type="MarginContainer" parent="GUI/sections"]
 margin_top = 75.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 115.0
 
 [node name="CheckButton" type="CheckButton" parent="GUI/sections/wireframe"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 40.0
 focus_mode = 0
 text = "Wireframe (icosahedron)"
@@ -93,11 +94,11 @@ script = ExtResource( 21 )
 
 [node name="scale" type="MarginContainer" parent="GUI/sections"]
 margin_top = 119.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 135.0
 
 [node name="HSlider" type="HSlider" parent="GUI/sections/scale"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 16.0
 min_value = 0.1
 max_value = 2.0
@@ -107,11 +108,11 @@ script = ExtResource( 18 )
 
 [node name="fov" type="MarginContainer" parent="GUI/sections"]
 margin_top = 139.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 155.0
 
 [node name="HSlider" type="HSlider" parent="GUI/sections/fov"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 16.0
 min_value = 50.0
 max_value = 130.0
@@ -120,11 +121,11 @@ script = ExtResource( 19 )
 
 [node name="hex_frame" type="MarginContainer" parent="GUI/sections"]
 margin_top = 159.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 199.0
 
 [node name="CheckButton" type="CheckButton" parent="GUI/sections/hex_frame"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 40.0
 focus_mode = 0
 text = "2D hex siblings mode"
@@ -132,15 +133,27 @@ script = ExtResource( 9 )
 
 [node name="opaque" type="MarginContainer" parent="GUI/sections"]
 margin_top = 203.0
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 243.0
 
 [node name="CheckButton" type="CheckButton" parent="GUI/sections/opaque"]
-margin_right = 291.0
+margin_right = 337.0
 margin_bottom = 40.0
 focus_mode = 0
 text = "Opaque mode"
 script = ExtResource( 22 )
+
+[node name="disable_center" type="MarginContainer" parent="GUI/sections"]
+margin_top = 247.0
+margin_right = 337.0
+margin_bottom = 287.0
+
+[node name="CheckButton" type="CheckButton" parent="GUI/sections/disable_center"]
+margin_right = 337.0
+margin_bottom = 40.0
+focus_mode = 0
+text = "Hide center (also cam to center)"
+script = ExtResource( 24 )
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
 script = ExtResource( 1 )
