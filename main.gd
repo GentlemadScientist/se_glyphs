@@ -293,8 +293,8 @@ func _ready():
 	init_handlers()
 
 func _process(delta):
-	if $"/root/Global".opaque_mode == true && "X" in glyphs:
-		var edge_distance_squared = $Camera.transform.origin.distance_squared_to(glyphs["X"].coord) #+ pow($"/root/Global".scale_multiplier, 2)
+	if $"/root/Global".opaque_mode == true && "XXX" in glyphs:
+		var edge_distance_squared = $Camera.transform.origin.distance_squared_to(glyphs["XXX"].coord) #+ pow($"/root/Global".scale_multiplier, 2)
 		for x in used_coord_map:
 			for y in used_coord_map[x]:
 				for z in used_coord_map[x][y]:
