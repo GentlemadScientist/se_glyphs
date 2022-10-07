@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://main.gd" type="Script" id=1]
 [ext_resource path="res://assets/glyph-a-1.png" type="Texture" id=2]
@@ -8,8 +8,8 @@
 [ext_resource path="res://collision_shape.gd" type="Script" id=6]
 [ext_resource path="res://glyph_label.gd" type="Script" id=7]
 [ext_resource path="res://assets/text_theme.tres" type="Theme" id=8]
-[ext_resource path="res://gui_hexframe_chkbox.gd" type="Script" id=9]
-[ext_resource path="res://gui_button_display.gd" type="Script" id=10]
+[ext_resource path="res://scenes/gui_left.tscn" type="PackedScene" id=9]
+[ext_resource path="res://hexgrid.gd" type="Script" id=10]
 [ext_resource path="res://Grid.gd" type="Script" id=11]
 [ext_resource path="res://assets/grid_red.tres" type="Material" id=12]
 [ext_resource path="res://assets/grid_green.tres" type="Material" id=13]
@@ -17,15 +17,12 @@
 [ext_resource path="res://assets/grid_line.tres" type="CylinderMesh" id=15]
 [ext_resource path="res://assets/grid_blue.tres" type="Material" id=16]
 [ext_resource path="res://assets/sphere_mesh.tres" type="SphereMesh" id=17]
-[ext_resource path="res://scale_slider_script.gd" type="Script" id=18]
-[ext_resource path="res://fov_slider_script.gd" type="Script" id=19]
-[ext_resource path="res://gui_glyphs_chkbox.gd" type="Script" id=20]
-[ext_resource path="res://gui_chkbox_wireframe.gd" type="Script" id=21]
-[ext_resource path="res://gui_opaque_chkbox.gd" type="Script" id=22]
+[ext_resource path="res://assets/orange.png" type="Texture" id=18]
+[ext_resource path="res://assets/red.png" type="Texture" id=19]
+[ext_resource path="res://assets/sphere_material_main.tres" type="Material" id=20]
+[ext_resource path="res://assets/purple.png" type="Texture" id=21]
 [ext_resource path="res://assets/wireframe_hex_material.tres" type="Material" id=23]
-[ext_resource path="res://gui_button_hidecenter.gd" type="Script" id=24]
-[ext_resource path="res://gui_button_highlight_edge.gd" type="Script" id=25]
-[ext_resource path="res://gui_slider_sphere_hide.gd" type="Script" id=26]
+[ext_resource path="res://GridSolver.gd" type="Script" id=28]
 
 [sub_resource type="DynamicFontData" id=9]
 font_path = "res://assets/fonts/Montserrat-Regular.ttf"
@@ -37,148 +34,120 @@ font_data = SubResource( 9 )
 
 [sub_resource type="SphereShape" id=7]
 
+[sub_resource type="RectangleShape2D" id=11]
+
+[sub_resource type="SphereMesh" id=12]
+material = ExtResource( 20 )
+radius = 10.0
+height = 20.0
+
 [node name="Main" type="Node"]
 
 [node name="GUI" type="MarginContainer" parent="."]
-anchor_left = 0.053
-anchor_right = 0.25
-anchor_bottom = 0.25
-margin_left = -51.272
-margin_top = 3.0
-margin_right = 38.104
-margin_bottom = 43.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+focus_mode = 2
+mouse_filter = 2
 theme = ExtResource( 8 )
 
 [node name="Background" type="NinePatchRect" parent="GUI"]
-margin_right = 337.0
-margin_bottom = 351.0
+margin_right = 1920.0
+margin_bottom = 1080.0
 
-[node name="sections" type="VBoxContainer" parent="GUI"]
-margin_right = 337.0
-margin_bottom = 351.0
+[node name="HBoxContainer" type="HBoxContainer" parent="GUI"]
+margin_right = 1920.0
+margin_bottom = 1080.0
+mouse_filter = 2
 
-[node name="glyphs" type="MarginContainer" parent="GUI/sections"]
-margin_right = 337.0
+[node name="sections" parent="GUI/HBoxContainer" instance=ExtResource( 9 )]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GUI/HBoxContainer"]
+margin_left = 341.0
+margin_right = 963.0
+margin_bottom = 145.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+size_flags_stretch_ratio = 6.79
+
+[node name="MarginContainer" type="MarginContainer" parent="GUI/HBoxContainer/VBoxContainer"]
+margin_right = 164.0
 margin_bottom = 40.0
+size_flags_horizontal = 0
 
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/glyphs"]
-margin_right = 337.0
+[node name="GridSolver" type="CheckButton" parent="GUI/HBoxContainer/VBoxContainer/MarginContainer"]
+margin_right = 164.0
 margin_bottom = 40.0
-focus_mode = 0
-theme = ExtResource( 8 )
-pressed = true
-text = "Show Glyphs"
-script = ExtResource( 20 )
+text = "Grid solver"
+align = 1
+icon_align = 1
+script = ExtResource( 28 )
 
-[node name="display" type="MarginContainer" parent="GUI/sections"]
+[node name="GridContainer" type="GridContainer" parent="GUI/HBoxContainer/VBoxContainer"]
 margin_top = 44.0
-margin_right = 337.0
-margin_bottom = 71.0
+margin_right = 622.0
+margin_bottom = 145.0
+columns = 3
 
-[node name="Button" type="Button" parent="GUI/sections/display"]
-margin_right = 337.0
-margin_bottom = 27.0
-focus_mode = 0
-text = "Show Glyphs"
-script = ExtResource( 10 )
+[node name="Label" type="Label" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_top = 5.0
+margin_right = 56.0
+margin_bottom = 26.0
+text = "Target "
 
-[node name="wireframe" type="MarginContainer" parent="GUI/sections"]
+[node name="target" type="LineEdit" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 60.0
+margin_right = 118.0
+margin_bottom = 31.0
+focus_mode = 1
+text = "YYYTo"
+
+[node name="empty" type="Label" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 122.0
+margin_top = 5.0
+margin_right = 622.0
+margin_bottom = 26.0
+
+[node name="key1_label" type="Label" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_top = 40.0
+margin_right = 56.0
+margin_bottom = 61.0
+text = "Key #1"
+
+[node name="key1" type="LineEdit" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 60.0
+margin_top = 35.0
+margin_right = 118.0
+margin_bottom = 66.0
+text = "E"
+
+[node name="coord1" type="LineEdit" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 122.0
+margin_top = 35.0
+margin_right = 622.0
+margin_bottom = 66.0
+rect_min_size = Vector2( 500, 0 )
+text = "0.49359179600105, -0.40521926598822, 0.76952224489773"
+
+[node name="key2_label" type="Label" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
 margin_top = 75.0
-margin_right = 337.0
-margin_bottom = 115.0
+margin_right = 56.0
+margin_bottom = 96.0
+text = "Key #2"
 
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/wireframe"]
-margin_right = 337.0
-margin_bottom = 40.0
-focus_mode = 0
-text = "Wireframe (icosahedron)"
-script = ExtResource( 21 )
+[node name="key2" type="LineEdit" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 60.0
+margin_top = 70.0
+margin_right = 118.0
+margin_bottom = 101.0
+text = "L"
 
-[node name="scale" type="MarginContainer" parent="GUI/sections"]
-margin_top = 119.0
-margin_right = 337.0
-margin_bottom = 135.0
-
-[node name="HSlider" type="HSlider" parent="GUI/sections/scale"]
-margin_right = 337.0
-margin_bottom = 16.0
-min_value = 0.1
-max_value = 2.0
-step = 0.1
-value = 1.0
-script = ExtResource( 18 )
-
-[node name="fov" type="MarginContainer" parent="GUI/sections"]
-margin_top = 139.0
-margin_right = 337.0
-margin_bottom = 155.0
-
-[node name="HSlider" type="HSlider" parent="GUI/sections/fov"]
-margin_right = 337.0
-margin_bottom = 16.0
-min_value = 50.0
-max_value = 130.0
-value = 70.0
-script = ExtResource( 19 )
-
-[node name="hex_frame" type="MarginContainer" parent="GUI/sections"]
-margin_top = 159.0
-margin_right = 337.0
-margin_bottom = 199.0
-
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/hex_frame"]
-margin_right = 337.0
-margin_bottom = 40.0
-focus_mode = 0
-text = "2D hex siblings mode"
-script = ExtResource( 9 )
-
-[node name="opaque" type="MarginContainer" parent="GUI/sections"]
-margin_top = 203.0
-margin_right = 337.0
-margin_bottom = 243.0
-
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/opaque"]
-margin_right = 337.0
-margin_bottom = 40.0
-focus_mode = 0
-text = "Opaque mode"
-script = ExtResource( 22 )
-
-[node name="disable_center" type="MarginContainer" parent="GUI/sections"]
-margin_top = 247.0
-margin_right = 337.0
-margin_bottom = 287.0
-
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/disable_center"]
-margin_right = 337.0
-margin_bottom = 40.0
-focus_mode = 0
-text = "Hide center (also cam to center)"
-script = ExtResource( 24 )
-
-[node name="highlight_edges" type="MarginContainer" parent="GUI/sections"]
-margin_top = 291.0
-margin_right = 337.0
-margin_bottom = 331.0
-
-[node name="CheckButton" type="CheckButton" parent="GUI/sections/highlight_edges"]
-margin_right = 337.0
-margin_bottom = 40.0
-focus_mode = 0
-text = "Highlight 2d edge nodes"
-script = ExtResource( 25 )
-
-[node name="sphere_hide" type="MarginContainer" parent="GUI/sections"]
-margin_top = 335.0
-margin_right = 337.0
-margin_bottom = 351.0
-
-[node name="HSlider" type="HSlider" parent="GUI/sections/sphere_hide"]
-margin_right = 337.0
-margin_bottom = 16.0
-max_value = 20.0
-script = ExtResource( 26 )
+[node name="coord2" type="LineEdit" parent="GUI/HBoxContainer/VBoxContainer/GridContainer"]
+margin_left = 122.0
+margin_top = 70.0
+margin_right = 622.0
+margin_bottom = 101.0
+rect_min_size = Vector2( 400, 0 )
+text = "0.4878124529308, -0.4141882591603, 0.7684315823412"
 
 [node name="symbol_3d_space" type="Spatial" parent="."]
 script = ExtResource( 1 )
@@ -225,6 +194,9 @@ script = ExtResource( 6 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 30.8824 )
 script = ExtResource( 3 )
 
+[node name="draw_connected" type="ImmediateGeometry" parent="symbol_3d_space"]
+cast_shadow = 0
+
 [node name="draw_wireframe" type="ImmediateGeometry" parent="symbol_3d_space"]
 visible = false
 
@@ -264,3 +236,56 @@ material/0 = ExtResource( 13 )
 transform = Transform( 0.02, 0, 0, 0, -2.18557e-08, -0.02, 0, 0.5, -8.74228e-10, 0, 0, 0 )
 mesh = ExtResource( 15 )
 material/0 = ExtResource( 16 )
+
+[node name="hexgrid" type="Node2D" parent="."]
+script = ExtResource( 10 )
+
+[node name="Area2D" type="Area2D" parent="hexgrid"]
+visible = false
+position = Vector2( 780, 411 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="hexgrid/Area2D"]
+position = Vector2( -1, -1 )
+scale = Vector2( 2.535, 2.523 )
+shape = SubResource( 11 )
+
+[node name="Sprite" type="Sprite" parent="hexgrid/Area2D"]
+texture = ExtResource( 2 )
+
+[node name="Label" type="Label" parent="hexgrid/Area2D"]
+margin_left = -6.0
+margin_top = 24.0
+margin_right = 34.0
+margin_bottom = 38.0
+text = "GL"
+
+[node name="Inputs" type="Control" parent="hexgrid"]
+margin_right = 40.0
+margin_bottom = 40.0
+
+[node name="c1" type="MeshInstance2D" parent="hexgrid"]
+visible = false
+position = Vector2( 551, 310 )
+z_index = 1
+mesh = SubResource( 12 )
+texture = ExtResource( 19 )
+
+[node name="c2" type="MeshInstance2D" parent="hexgrid"]
+visible = false
+position = Vector2( 571, 343 )
+z_index = 1
+mesh = SubResource( 12 )
+texture = ExtResource( 18 )
+
+[node name="c_target" type="MeshInstance2D" parent="hexgrid"]
+visible = false
+position = Vector2( 599, 310 )
+z_index = 1
+mesh = SubResource( 12 )
+texture = ExtResource( 21 )
+
+[connection signal="text_entered" from="GUI/HBoxContainer/VBoxContainer/GridContainer/target" to="hexgrid" method="_on_target_text_entered"]
+[connection signal="text_entered" from="GUI/HBoxContainer/VBoxContainer/GridContainer/key1" to="hexgrid" method="_on_key1_text_entered"]
+[connection signal="text_entered" from="GUI/HBoxContainer/VBoxContainer/GridContainer/coord1" to="hexgrid" method="_on_coord1_text_entered"]
+[connection signal="text_entered" from="GUI/HBoxContainer/VBoxContainer/GridContainer/key2" to="hexgrid" method="_on_key2_text_entered"]
+[connection signal="text_entered" from="GUI/HBoxContainer/VBoxContainer/GridContainer/coord2" to="hexgrid" method="_on_coord2_text_entered"]

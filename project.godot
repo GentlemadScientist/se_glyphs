@@ -19,6 +19,15 @@ config/icon="res://icon.png"
 Draw3d="*res://Draw3D.gd"
 Global="*res://global.gd"
 
+[display]
+
+window/size/width=1920
+window/size/height=1080
+
+[editor_plugins]
+
+enabled=PoolStringArray( "res://addons/origin_shifter/plugin.cfg" )
+
 [global]
 
 theme=false

@@ -1,4 +1,5 @@
 extends Node
+signal glyphs_loaded
 
 var glyphs = {}
 var used_coord_map = {} # A map of references of coords to symbols, for easy access to a symbol at a given coord
@@ -26,9 +27,10 @@ func load_data(content):
 	
 	var vec_scale = $"/root/Global".scale_multiplier / 3 * Vector3(1,1,1)
 	
+	var connected_nodes = []
+	
 	for key in json.result:
 		var data = json.result[key]
-		data.coord = Vector3(data.coord.x, data.coord.y, data.coord.z)
 		var nodes = {}; # A reference to all new nodes, to be able to delete them
 		
 		if data.coord.x == 0 && data.coord.y == 0 && data.coord.z == 0 && data.se_code != 64:
@@ -43,9 +45,20 @@ func load_data(content):
 		
 		var sphere = MeshInstance.new()
 		nodes.sphere = sphere
-		sphere.mesh = load('res://assets/sphere_mesh.tres')
+		if key == 'YYYFrom' || key == 'YYYTo':
+			sphere.mesh = load('res://assets/sphere_mesh_dest.tres')
+		elif "codename" in data:
+			sphere.mesh = load('res://assets/sphere_mesh.tres')
+		else:
+			sphere.mesh = load('res://assets/sphere_mesh_additional.tres')
+		
 		sphere.scale = vec_scale / 4
+		if "scale" in data:
+			sphere.scale = sphere.scale * data.scale
 		symbol.add_child(sphere)
+		
+		if "connect" in data:
+			connected_nodes.append([key, data.connect])
 		
 		var glyph_image = Sprite3D.new()
 		nodes.glyph_image = glyph_image
@@ -67,6 +80,8 @@ func load_data(content):
 			glyph_label.text = str(data.coord.x,"\n",data.coord.y,"\n",data.coord.z) # Set dynamically
 		elif $"/root/Global".display_button_current_state == 3 && "codename" in data: # Codename
 			glyph_label.text = data.codename
+		if "distance_to" in data:
+			glyph_label.text = str(glyph_label.text,":",(glyphs[data.distance_to].nodes.sphere.get_parent().transform.origin.distance_to(sphere.get_parent().transform.origin))/$"/root/Global".scale_multiplier)
 		glyph_label.billboard = SpatialMaterial.BILLBOARD_ENABLED
 		glyph_label.modulate = Color(0, 0, 0, 1)
 		glyph_label.set_script(label_script)
@@ -103,10 +118,51 @@ func load_data(content):
 				"key": key,
 				"nodes": nodes
 			}
-		
+			
 		data.nodes = nodes
 		glyphs[key] = data
+	
+	for key in glyphs:
+		var data = glyphs[key]
+		if "shift_from" in data:
+			var shift = data["shift_from"]
+			var source = glyphs[shift["source"]]
+			var scale = shift["scale"]
+			var origin_vec = pseudo_vec_diff(source.coord,data.coord)
+			var new_rel_vec = pseudo_vec_mult(origin_vec, scale)
+			var new_vec = pseudo_vec_add(new_rel_vec, source.coord)
+			data.nodes.symbol.transform.origin = $"/root/Global".scale_multiplier * Vector3(new_vec.x, new_vec.y, new_vec.z)
+		
+	for connected in connected_nodes:
+		var draw = $draw_connected
+		draw.begin(Mesh.PRIMITIVE_LINE_STRIP)
+		draw.set_color(Color(0,1,0,1))
+		for v in connected:
+			draw.add_vertex(Vector3(glyphs[v].coord.x, glyphs[v].coord.y, glyphs[v].coord.z) * $"/root/Global".scale_multiplier)
+		draw.end()
 	fill_empty_coords()
+	
+	emit_signal("glyphs_loaded", glyphs)
+	#subsphere($"/root/Global".subsphere_node)
+
+func pseudo_vec_mult(vec1: Dictionary, val: float):
+	return {
+		"x": vec1.x * val,
+		"y": vec1.y * val,
+		"z": vec1.z * val
+	}
+func pseudo_vec_diff(vec1: Dictionary, vec2: Dictionary):
+	return {
+		"x": vec2.x - vec1.x,
+		"y": vec2.y - vec1.y,
+		"z": vec2.z - vec1.z
+	}
+func pseudo_vec_add(vec1: Dictionary, vec2: Dictionary):
+	return {
+		"x": vec2.x + vec1.x,
+		"y": vec2.y + vec1.y,
+		"z": vec2.z + vec1.z
+	}
 
 func fill_empty_coords():
 	var vec_scale = $"/root/Global".scale_multiplier / 3 * Vector3(1,1,1)
@@ -156,7 +212,6 @@ func fill_empty_coords():
 	draw_wireframe()
 	connect_grid_siblings()
 	#draw_hexgrid()
-	tests()
 
 func unload_data():
 	# Delete all instances
@@ -185,6 +240,34 @@ func all_ti_coordinate_list():
 					result.append(Vector3(n3,n1,n2))
 					result.append(Vector3(n2,n3,n1))
 	return result
+
+func subsphere(origin_key):
+	var data = glyphs[origin_key]
+	data.nodes.subsphere = []
+	for v in all_ti_coordinate_list():
+		var sphere = MeshInstance.new()
+		sphere.mesh = load('res://assets/sphere_mesh_selected.tres')
+		sphere.scale = Vector3(1,1,1)*0.05
+		var distance_to_parent_multiplier = 3
+		
+		var parent_origin: Vector3 = data.nodes.sphere.get_parent().transform.origin
+		var global_origin: Vector3 = parent_origin + v * distance_to_parent_multiplier
+		var normalized_global_origin = global_origin * ($"/root/Global".scale_multiplier / global_origin.length())
+		var new_relative_pos = normalized_global_origin - parent_origin # projection of previous sphere on the big unit sphere
+		
+		sphere.transform.origin = new_relative_pos
+		print_debug((new_relative_pos + parent_origin).length())
+		data.nodes.subsphere.append(sphere)
+		data.nodes.sphere.add_child(sphere)
+		
+		
+		#DBG: Before projection for testing
+		var sphere2 = MeshInstance.new()
+		sphere2.mesh = load('res://assets/sphere_mesh_additional.tres')
+		sphere2.material_override = load('res://assets/sphere_material_secondary.tres')
+		sphere2.scale = Vector3(1,1,1)*0.05
+		sphere2.transform.origin = v * distance_to_parent_multiplier
+		data.nodes.sphere.add_child(sphere2)
 
 # Adds information about 3 nearest siblings to the data def
 func connect_siblings():
@@ -270,13 +353,10 @@ func draw_hexgrid():
 
 func init_handlers():
 	pass
-	
-func tests():
-	var arrow: Vector3 = glyphs["H"].coord
-	var zorro: Vector3 = glyphs["AN"].coord
-	var wing: Vector3 = glyphs["AC"].coord
 
 func _ready():
+	get_node_from_main("hexgrid").hide()
+	connect("glyphs_loaded", get_node_from_main("hexgrid"), "on_glyphs_loaded")
 	$HTTPRequest.connect("request_completed", self, "_on_request_completed")
 	if OS.is_debug_build():
 		# Read local user file
@@ -381,7 +461,7 @@ func _on_display_button_pressed(button: Button):
 						else:
 							def.nodes.glyph_label.text = ""
 	
-func _on_scale_changed(value, slider: HSlider):
+func _on_scale_changed(value, _slider: HSlider):
 	var default_scale = $"/root/Global".scale_multiplier * Vector3(1,1,1) / 12
 	for x in used_coord_map:
 		for y in used_coord_map[x]:
@@ -433,3 +513,30 @@ func _on_highlight_edges_pressed(button_pressed):
 
 func _on_sphere_hide_changed(value, slider: HSlider):
 	$"/root/Global".camera_hide_radius_squared	= value * value
+
+func _on_subsphere_rotate_changed(value, slider: HSlider):
+	var sphere: MeshInstance = glyphs[$"/root/Global".subsphere_node].nodes.sphere
+	sphere.rotation_degrees.x = value
+	pass
+
+func _on_grid_solver_pressed(val):
+	$"/root/Global".is_3d = !val
+	if (val):
+		switch2d()
+	else:
+		switch3d()
+
+func get_node_from_main(node_nm):
+	return get_tree().get_root().get_child(2).get_node(node_nm)
+
+func switch2d():
+	#get_node_from_main("GUI/HBoxContainer/sections").hide()
+	get_node_from_main("symbol_3d_space").hide()
+	get_node_from_main("Grid").hide()
+	get_node_from_main("hexgrid").show()
+
+func switch3d():
+	#get_node_from_main("GUI/HBoxContainer/sections").show()
+	get_node_from_main("symbol_3d_space").show()
+	get_node_from_main("Grid").show()
+	get_node_from_main("hexgrid").hide()
